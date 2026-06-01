@@ -1,3 +1,14 @@
+// Explicitly (re)apply the video mode before rendering.
+//
+// Recent AthenaEnv builds boot the GS with Field = GS_FIELD and the boot-time
+// init_graphics() path skips the display-offset and flip-function setup that
+// Screen.setMode() performs. A script that never calls setMode() (older
+// AthenaEnv let you skip it) then renders the 640x448 interlaced framebuffer as
+// alternating black scanlines. Every AthenaEnv example calls setMode at
+// startup; mirroring that runs the full display setup and fixes the artifact.
+const videoMode = Screen.getMode();
+Screen.setMode(videoMode);
+
 Screen.setVSync(true);
 
 const SCREEN_WIDTH = 640;
