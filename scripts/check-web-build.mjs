@@ -26,11 +26,18 @@ const TEXT = new Set(['.html', '.js', '.css'])
 // a browser-internal one and has no business in a deployed page.
 const ALLOWED_SCHEMES = new Set(['http', 'https', 'data', 'blob', 'mailto'])
 
-// A leaked local URL always carries a path: `file:///…`, `file://host/…`.
-// Phaser's loader config lists the bare scheme string "file://" as one of the
-// prefixes it treats as local, which is a comparison and not a URL — matching
-// on the trailing slash keeps that out of the results.
-const LOCAL_URL = /\b(?:file:\/\/\/|file:\/\/[^"'\s)]+\/|chrome:\/\/|resource:\/\/)/g
+// Local URLs, in every spelling a browser accepts: schemes are
+// case-insensitive, and any number of leading slashes parses the same, so
+// `file:/tmp/x`, `file:///tmp/x` and `FILE://host/tmp/x` are one URL to the
+// URL parser and all three have to be caught.
+//
+// The slashes and the path character after them are what make it a URL rather
+// than a coincidence. Minified code is full of `file:!1` and `File:t(41299)`
+// object keys, Phaser's loader config lists the bare scheme string "file://"
+// as a prefix it compares against, and its GetURL carries an escaped
+// `file:\/\/` inside a regex literal — none of those are loads, and none of
+// them reach a path character through unescaped slashes.
+const LOCAL_URL = /\b(?:file|chrome|resource):\/+[^/\\\s"'`)|<>][^\s"'`)<>]*/gi
 
 // src="…" / href="…" in the emitted HTML, quoted either way
 const HTML_URL_ATTR = /\b(?:src|href)\s*=\s*(["'])(.*?)\1/g
