@@ -129,7 +129,7 @@ static JSValue image_draw(JSContext *ctx, JSValue this_val, int argc, JSValue *a
     SDL_SetTextureScaleMode(im->tex,
                             im->filter ? SDL_ScaleModeLinear : SDL_ScaleModeNearest);
     uint32_t c = im->color;
-    SDL_SetTextureColorMod(im->tex, c & 0xFF, (c >> 8) & 0xFF, (c >> 16) & 0xFF);
+    SDL_SetTextureColorMod(im->tex, athena_rgb(c), athena_rgb(c >> 8), athena_rgb(c >> 16));
     SDL_SetTextureAlphaMod(im->tex, athena_alpha(c));
     SDL_RenderCopyExF(g_renderer, im->tex, &src, &dst, 0, NULL, (SDL_RendererFlip)flip);
     return JS_UNDEFINED;
@@ -180,7 +180,7 @@ static JSValue image_ctor(JSContext *ctx, JSValue new_target, int argc, JSValue 
     im->starty = 0;
     im->endx = im->natW;
     im->endy = im->natH;
-    im->color = 0x80FFFFFF; // white, alpha 128 = neutral
+    im->color = 0x80808080; // RGB 128 + alpha 128 = neutral
     im->filter = 0;         // NEAREST
 
     JSValue obj = JS_NewObjectClass(ctx, image_class_id);
