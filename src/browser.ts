@@ -4,12 +4,21 @@
 // src/native.ts.
 //
 // Assets live at the repo root (background.png, frames/) so the native ISO
-// build can bundle them; here Vite resolves them to URLs via import.meta.glob
+// build can bundle them; here Vite resolves them to URLs via `?url` imports
 // (works in both `vite dev` and `vite build`). We decode each image with a
 // native <img> and register it through textures.addImage rather than Phaser's
 // file loader — the game needs every texture present before the first frame,
 // and this avoids a loader stall Phaser 4.2.1 hits when a large batch of small
 // same-origin PNGs completes in one tick.
+//
+// Every asset URL here has to be a plain build-time string. `new URL(path,
+// import.meta.url)` resolves against whatever URL the chunk itself was loaded
+// from, so a host that serves the bundle from anything but http(s) rewrites
+// every asset into that scheme — a page served over https then asks for
+// file:// URLs and the browser refuses the load ("Content at … may not load
+// or link to file:///"). A `?url` import bakes the final path in instead,
+// leaving nothing to resolve at runtime; scripts/check-web-build.mjs fails
+// the build if one creeps back in.
 
 import Phaser from 'phaser'
 import { createRuntime, type PS2Runtime } from '5velte-ps2'
@@ -17,8 +26,8 @@ import { createPhaserHost, registerCanvasBitmapFont, type PhaserFontConfig } fro
 import { createGame, BACKGROUND_FILE } from './ryu/index.ts'
 import { createKeyboardPads } from './pads.ts'
 import { createGamepadPads, mergePadSources } from './gamepad.ts'
+import bgUrl from '../background.png?url'
 
-const bgUrl = new URL('../background.png', import.meta.url).href
 const frameModules = import.meta.glob('../frames/*.png', {
   eager: true,
   query: '?url',

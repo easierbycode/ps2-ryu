@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-web-build.mjs dist",
     "preview": "vite preview --port 5173 --strictPort",
     "build:native": "node scripts/build-native.mjs",
     "iso": "node scripts/build-iso.mjs",
