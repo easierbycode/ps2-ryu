@@ -171,7 +171,7 @@ static JSValue font_print(JSContext *ctx, JSValue this_val, int argc, JSValue *a
     } else if (f->has_color) {
         color = f->color;
     }
-    SDL_SetTextureColorMod(run->tex, color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF);
+    SDL_SetTextureColorMod(run->tex, athena_rgb(color), athena_rgb(color >> 8), athena_rgb(color >> 16));
     SDL_SetTextureAlphaMod(run->tex, athena_alpha(color));
 
     SDL_FRect dst = {

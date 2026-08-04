@@ -27,6 +27,13 @@ static inline Uint8 athena_alpha(Uint32 c) {
     return a > 255 ? 255 : (Uint8)a;
 }
 
+// GS color mod is also 128-neutral, but SDL_SetTextureColorMod's neutral is
+// 255 — rescale each channel the same way as alpha
+static inline Uint8 athena_rgb(Uint32 v) {
+    Uint32 s = (v & 0xFFu) * 255u / 128u;
+    return s > 255 ? 255 : (Uint8)s;
+}
+
 extern SDL_Renderer *g_renderer;
 
 // host_screen.c — window/renderer, the 640x448 render target, frame callback
