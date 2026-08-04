@@ -51,32 +51,56 @@ needed. Clone with `--recurse-submodules` — quickjs-ng is vendored at
 
 ## Controls
 
+Classic six-button layout:
+
 | | PS2 pad | Keyboard |
 | --- | --- | --- |
 | move | d-pad ←→ | arrow keys |
 | jump | d-pad UP | ↑ |
 | crouch | d-pad DOWN | ↓ |
-| punch | SQUARE (left face button) | V |
-| kick | CROSS (bottom face button) | Z |
-| shoryuken | → ↓ → SQUARE | → ↓ → V |
+| punch (light / medium / heavy) | SQUARE / TRIANGLE / R1 | V / C / E |
+| kick (light / medium / heavy) | CROSS / CIRCLE / R2 | Z / X / R |
+| all three punches | L1 | Q |
+| all three kicks | L2 | A |
+| shoryuken | → ↓ → any punch | → ↓ → V/C/E |
+| super shoryuken | all three punches (or L1) | Q (or V+C+E) |
 
-Buttons map **by position on every pad**, whatever the labels print: punch is
-always the left face button and kick always the bottom one. Every host does
-its own positional mapping — the PS2's own layout, the browser's keyboard
-bindings ([`src/pads.ts`](src/pads.ts)), and `BTN_SOUTH`/`BTN_WEST` in
-[`switch/source/host_pads.c`](switch/source/host_pads.c), which has to undo
-devkitPro SDL2's Nintendo labelling.
+The shoryuken rises with the strength of the punch that fired it and never
+moves Ryu horizontally. The super chains two low shoryukens into a
+normal-height one, with shadow frames trailing behind.
+
+Face buttons map **by position on every pad**, whatever the labels print:
+light punch is always the left face button, light kick always the bottom
+one. Every host does its own positional mapping — the PS2's own layout, the
+browser's keyboard bindings ([`src/pads.ts`](src/pads.ts)), the browser
+Gamepad API ([`src/gamepad.ts`](src/gamepad.ts)), and the face/shoulder/
+trigger table in [`switch/source/host_pads.c`](switch/source/host_pads.c),
+which has to undo devkitPro SDL2's Nintendo labelling.
+
+The shoulder/trigger row is the one place pads differ. SNES-style pads
+(detected by name — SNES / Super Famicom / 8BitDo SN30 receivers) put heavy
+punch on **R2** and heavy kick on **R**, with **L2** = all punches and
+**L** = all kicks; every other pad gets heavy punch on **R**, heavy kick on
+**R2**, **L** = all punches, **L2** = all kicks.
 
 ## Layout
 
 - `src/ryu/` — the game, written only against the 5velte-ps2 `PS2Runtime`
   surface so it runs unchanged on every host. `createGame(rt)` registers the
   per-frame callback; the host drives it with `rt.tick()`.
-  - `animation.ts` — frame animation (2× draw, crop-swap flips)
+  - `animation.ts` — frame animation (2× draw, crop-swap flips, tinted
+    ghost frames for the super's trail)
   - `input.ts` — per-frame pad snapshot with rising-edge detection
-  - `game.ts` — physics, camera, combat, and the shoryuken input buffer
-- `src/browser.ts` + `src/pads.ts` + `play/index.html` — the Phaser browser
-  host; `index.html` at the root is the download page.
+  - `game.ts` — physics, camera, six-button combat, the shoryuken input
+    buffer, and the super's shadow trail
+- `src/browser.ts` + `src/pads.ts` + `src/gamepad.ts` + `play/index.html` —
+  the Phaser browser host; `gamepad.ts` maps the browser Gamepad API
+  (including SNES-style pads) onto PS2 button masks and is merged with the
+  keyboard bindings.
+- `index.html` at the root is the download page, driven by `src/menu.ts`:
+  the Ryu logo idles through his stance frames, a connected gamepad picks
+  the download buttons (bottom face button selects), and the shoryuken
+  input on the logo is left as an exercise for the visitor.
 - `src/native.ts` — the native entry (esbuild bundles it to `build/main.js`).
   It serves both native hosts: on real AthenaEnv it busy-loops
   `Screen.clear()` / `Screen.flip()`, and on the Switch host (which drives

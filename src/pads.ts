@@ -5,8 +5,11 @@
 // seen by at least one poll. The game does its own edge detection on top of
 // held(), so fresh() simply mirrors held().
 //
-// Arrows = d-pad (Up = jump, Down = crouch), V = SQUARE (punch),
-// Z = CROSS (kick). Shoryuken: forward, down, forward + V.
+// Arrows = d-pad (Up = jump, Down = crouch). Six-button layout:
+// V/C/E = light/medium/heavy punch (SQUARE/TRIANGLE/R1),
+// Z/X/R = light/medium/heavy kick (CROSS/CIRCLE/R2),
+// Q = all three punches (L1, super shoryuken), A = all three kicks (L2).
+// Shoryuken: forward, down, forward + punch.
 
 import Phaser from 'phaser'
 import { PAD_BUTTONS } from '5velte-ps2'
@@ -46,6 +49,8 @@ export function createKeyboardPads(scene: Phaser.Scene): PadSource {
     bind(PAD_BUTTONS.SELECT, 'SHIFT'),
     bind(PAD_BUTTONS.L1, 'Q'),
     bind(PAD_BUTTONS.R1, 'E'),
+    bind(PAD_BUTTONS.L2, 'A'),
+    bind(PAD_BUTTONS.R2, 'R'),
   ]
 
   const held = (mask: number): boolean => {

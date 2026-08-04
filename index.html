@@ -45,10 +45,43 @@
         text-align: center;
       }
 
+      /* Ryu idles here (src/menu.ts swaps the static logo for the game's
+         frames); shoryukens only ever translate vertically, so the stage
+         keeps its footprint and the page never reflows. */
       .logo {
-        max-width: min(240px, 60%);
+        position: relative;
+        width: 200px; /* 80x128 frames at 2.5x */
+        height: 320px;
+        margin: 0 auto;
+      }
+
+      .logo img {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
         image-rendering: pixelated;
         filter: drop-shadow(0 0 18px rgba(124, 255, 79, 0.45));
+      }
+
+      .logo .logo-fallback {
+        height: 100%;
+      }
+
+      .logo .ryu-sprite {
+        width: 200px;
+        height: 320px;
+      }
+
+      .logo .ryu-ghost {
+        filter: brightness(0.45) saturate(0.5) drop-shadow(0 0 12px rgba(90, 140, 255, 0.5));
+      }
+
+      /* gamepad cursor for the download buttons */
+      .btn.pad-selected {
+        outline: 2px solid var(--yellow);
+        outline-offset: 3px;
+        box-shadow: 0 0 34px rgba(246, 255, 74, 0.45);
       }
 
       h1 {
@@ -210,7 +243,9 @@
   </head>
   <body>
     <main>
-      <img class="logo" src="./logo.png" alt="Ryu" />
+      <div class="logo">
+        <img class="logo-fallback" src="./logo.png" alt="Ryu" />
+      </div>
       <h1>RYU</h1>
       <div class="sub">PLAYSTATION 2 // ATHENAENV // 5VELTE-PS2</div>
 
@@ -232,8 +267,10 @@
           <li><b>Switch (CFW):</b> copy <b>ps2-ryu.nro</b> to <b>sd:/switch/</b> and launch from hbmenu (Atmosphère). Buttons map by position, so the left face button punches whatever it is labelled.</li>
           <li><b>Emulator:</b> open the ISO in PCSX2, or in the CMG launcher's PlayStation 2 screen (Play!).</li>
           <li><b>Real hardware:</b> load over USB/SMB with Open PS2 Loader, or burn to DVD-R (softmodded console).</li>
-          <li><b>Controls:</b> d-pad move · <b>UP</b> jump · <b>DOWN</b> crouch · <b>left face button</b> punch (SQUARE) · <b>bottom face button</b> kick (CROSS) · shoryuken <b>→ ↓ → punch</b>.</li>
-          <li><b>Keyboard:</b> arrows move, <b>↑</b> jump, <b>↓</b> crouch, <b>V</b> punch, <b>Z</b> kick.</li>
+          <li><b>Controls:</b> d-pad move · <b>UP</b> jump · <b>DOWN</b> crouch · punches on <b>left face / top face / R</b> (light/medium/heavy) · kicks on <b>bottom face / right face / R2</b> · shoryuken <b>→ ↓ → punch</b> (stronger punch, higher rise) · <b>all three punches or L</b> = super shoryuken · all kicks on <b>L2</b>.</li>
+          <li><b>SNES-style pad:</b> punches <b>Y / X / R2</b>, kicks <b>B / A / R</b>, super on <b>L2</b>, all kicks on <b>L</b>.</li>
+          <li><b>Keyboard:</b> arrows move, <b>↑</b> jump, <b>↓</b> crouch, <b>V/C/E</b> punch, <b>Z/X/R</b> kick, <b>Q</b> super (or V+C+E), <b>A</b> all kicks.</li>
+          <li><b>This page:</b> with a gamepad, <b>↑↓</b> picks a button and the <b>bottom face button</b> selects it — or try the shoryuken input on the logo.</li>
         </ul>
       </div>
 
@@ -242,5 +279,6 @@
         <a href="https://github.com/easierbycode/ps2-ryu">SOURCE</a>
       </footer>
     </main>
+    <script type="module" src="./src/menu.ts"></script>
   </body>
 </html>

@@ -16,6 +16,7 @@ import { createRuntime, type PS2Runtime } from '5velte-ps2'
 import { createPhaserHost, registerCanvasBitmapFont, type PhaserFontConfig } from '5velte-ps2/phaser'
 import { createGame, BACKGROUND_FILE } from './ryu/index.ts'
 import { createKeyboardPads } from './pads.ts'
+import { createGamepadPads, mergePadSources } from './gamepad.ts'
 
 const bgUrl = new URL('../background.png', import.meta.url).href
 const frameModules = import.meta.glob('../frames/*.png', {
@@ -57,7 +58,8 @@ class RyuScene extends Phaser.Scene {
 
     const { host } = createPhaserHost({
       scene: this,
-      pads: createKeyboardPads(this),
+      // keyboard and any connected browser gamepad both drive the PS2 pad
+      pads: mergePadSources(createKeyboardPads(this), createGamepadPads()),
       // texture keys are the Athena asset paths themselves
       resolveTexture: (path) => path,
       resolveFont: (): PhaserFontConfig => ({ key: 'ps2font', scale: 1 }),
