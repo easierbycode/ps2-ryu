@@ -1,0 +1,25 @@
+{
+  "name": "ps2-ryu",
+  "version": "1.0.0",
+  "description": "PS2-Ryu — a Street Fighter style AthenaEnv demo, ported onto the 5velte-ps2 runtime (Phaser 4 in the browser, native AthenaEnv on PS2)",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5173 --strictPort",
+    "build:native": "node scripts/build-native.mjs",
+    "iso": "node scripts/build-iso.mjs",
+    "nro": "node scripts/stage-switch-romfs.mjs && node scripts/build-switch-nro.mjs"
+  },
+  "dependencies": {
+    "5velte-ps2": "npm:@jsr/easierbycode__svelte-ps2@^1.1.0",
+    "phaser": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.6.3",
+    "vite": "^6.4.3"
+  }
+}

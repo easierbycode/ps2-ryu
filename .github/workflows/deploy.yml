@@ -1,0 +1,141 @@
+# Build the web app + the bootable PS2 ISO + the Switch homebrew NRO, then
+# publish all three to GitHub Pages: https://easierbycode.com/ps2-ryu/
+#   /                 Xbox-green download page
+#   /play/            browser build (5velte-ps2 Phaser host)
+#   /ps2-ryu.iso      the AthenaEnv disc image (also a run artifact)
+#   /ps2-ryu.nro      the Switch homebrew build (switch.yml, reusable)
+#
+# The last job pokes the CMG launcher so its PlayStation 2 screen picks up
+# both the new web build and the new ISO without anyone copying files by hand.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  # The NRO is the one artifact that depends on a third-party package server
+  # (pkg.devkitpro.org), which has 403'd the pacman databases and taken a
+  # whole deploy down with it. A reusable-workflow job can't carry
+  # continue-on-error, so `build` overrides its own `if` instead: the web
+  # build, the ISO and the download page ship whether or not the NRO does,
+  # and the page drops its Switch button for that release. The nro job is
+  # left to fail loudly — the run goes red so a persistent outage is
+  # visible, but the site still publishes.
+  nro:
+    uses: ./.github/workflows/switch.yml
+
+  build:
+    needs: nro
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      # full history: the ISO's timestamp comes from the last commit that
+      # touched the game inputs, which a shallow clone can't see
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # `npm install`, not `npm ci`: 5velte-ps2 comes from the JSR npm
+      # registry (.npmrc), which no lockfile in this repo pins yet
+      - name: Build web app + download page
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+
+      - name: Build native bundle (build/)
+        run: npm run build:native
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # SOURCE_DATE_EPOCH pins the ISO's timestamps so the same game produces
+      # a byte-identical disc. It comes from the last commit that touched the
+      # trees the image packs — the game source and its assets — rather than
+      # HEAD, so a docs- or workflow-only commit doesn't silently churn the
+      # image.
+      - name: Build PS2 ISO
+        run: |
+          epoch=$(git log -1 --format=%ct -- src frames background.png athena.elf athena.ini)
+          [ -n "$epoch" ] || epoch=$(git show -s --format=%ct HEAD)
+          SOURCE_DATE_EPOCH=$epoch \
+            deno run --allow-read --allow-write --allow-env \
+              scripts/build-athena-iso.ts build dist/ps2-ryu.iso athena.elf
+
+      - name: Fetch Switch NRO from the nro job
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ps2-ryu-nro
+          path: dist
+
+      # a release without the NRO is fine, a download page linking one that
+      # isn't there is not — swap the button for a note and say so in the run
+      - name: Drop the Switch button if the NRO is missing
+        run: |
+          node scripts/disable-switch-download.mjs dist
+          if [ ! -f dist/ps2-ryu.nro ]; then
+            echo "⚠️ Published without the Switch NRO — the \`nro\` job could not reach devkitPro." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Upload ISO as a run artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ps2-ryu-iso
+          path: dist/ps2-ryu.iso
+
+  # A job's default `if: success()` is satisfied only when the *whole*
+  # ancestor chain succeeded, not just its direct needs — so a failed `nro`
+  # would skip this even though `build` overrode its own condition and
+  # produced a perfectly good Pages artifact. Gate on build's result
+  # explicitly.
+  deploy:
+    needs: build
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Tell the CMG launcher to re-sync its PlayStation 2 entries. Needs a
+  # CMG_DISPATCH_TOKEN secret with `contents: write` on easierbycode/cmg;
+  # without one this step is skipped and cmg's own hourly poll picks the
+  # change up on its next run instead.
+  notify-cmg:
+    needs: deploy
+    if: ${{ !cancelled() && needs.deploy.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch to easierbycode/cmg
+        env:
+          GH_TOKEN: ${{ secrets.CMG_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "CMG_DISPATCH_TOKEN not set — cmg will pick this up on its next poll"
+            exit 0
+          fi
+          gh api repos/easierbycode/cmg/dispatches \
+            -f event_type=ps2-ryu-updated \
+            -F "client_payload[sha]=$GITHUB_SHA"

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+*.iso
+
+# switch build output (romfs is staged by scripts/stage-switch-romfs.mjs)
+switch/romfs/
+switch/build/
+switch/*.nro
+switch/*.elf
+switch/*.nacp

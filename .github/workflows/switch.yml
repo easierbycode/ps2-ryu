@@ -1,0 +1,57 @@
+# Build the Nintendo Switch homebrew NRO (switch/ host + the bundled game).
+# Called by deploy.yml on every push to main, which publishes the NRO on the
+# download page next to the PS2 ISO (both carry the same game bundle).
+name: Switch NRO
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nro:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # pkg.devkitpro.org 403s the pacman databases often enough to have taken
+      # whole deploys down. Retry before giving up; deploy.yml treats a
+      # failure here as "no NRO this time" rather than a failed release.
+      - name: Install SDL2 portlibs
+        run: |
+          for attempt in 1 2 3 4; do
+            if dkp-pacman -Sy --noconfirm && \
+               dkp-pacman -S --noconfirm --needed \
+                 switch-sdl2 switch-sdl2_image switch-sdl2_ttf switch-freetype switch-libpng switch-zlib; then
+              exit 0
+            fi
+            echo "::warning::devkitPro package sync failed (attempt $attempt/4)"
+            sleep $((attempt * 15))
+          done
+          echo "::error::could not fetch the devkitPro portlibs after 4 attempts"
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # staging runs the esbuild native build first, so it needs npm deps
+      # (`npm install`, not `npm ci`: 5velte-ps2 comes from the JSR npm
+      # registry via .npmrc, which no lockfile in this repo pins yet)
+      - name: Stage romfs
+        run: |
+          npm install --no-audit --no-fund
+          node scripts/stage-switch-romfs.mjs
+
+      - name: Build NRO
+        run: make -C switch
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ps2-ryu-nro
+          path: switch/ps2-ryu.nro

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ryu — PlayStation 2</title>
+    <meta name="description" content="A Street Fighter–style demo for PlayStation 2 — download the Switch homebrew NRO or the PS2 ISO, or play in the browser." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Xbox green theme — design tokens from cmg/static/dashboard.css */
+      :root {
+        --green: #9cff6b;
+        --green-glow: #7cff4f;
+        --green-deep: #0e6a2b;
+        --yellow: #f6ff4a;
+        --tile-edge: rgba(140, 255, 110, 0.55);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--green);
+        font-family: 'Share Tech Mono', monospace;
+        background:
+          radial-gradient(ellipse 80% 60% at 38% 55%, rgba(20, 90, 40, 0.45), transparent 70%),
+          radial-gradient(ellipse 60% 70% at 50% 50%, rgba(8, 40, 18, 0.85), #000 80%),
+          #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 16px;
+      }
+
+      main {
+        width: min(680px, 100%);
+        text-align: center;
+      }
+
+      .logo {
+        max-width: min(240px, 60%);
+        image-rendering: pixelated;
+        filter: drop-shadow(0 0 18px rgba(124, 255, 79, 0.45));
+      }
+
+      h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 800;
+        font-size: clamp(20px, 4.6vw, 34px);
+        letter-spacing: 0.14em;
+        margin: 18px 0 4px;
+        color: var(--green);
+        text-shadow: 0 0 14px rgba(124, 255, 79, 0.55);
+      }
+
+      .sub {
+        color: rgba(220, 255, 180, 0.55);
+        letter-spacing: 0.28em;
+        font-size: 13px;
+        margin-bottom: 36px;
+      }
+
+      .buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        align-items: center;
+      }
+
+      .btn {
+        display: inline-block;
+        width: min(420px, 100%);
+        padding: 16px 22px;
+        border: 1px solid var(--tile-edge);
+        border-radius: 8px;
+        text-decoration: none;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 0.12em;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      }
+
+      .btn-primary {
+        font-weight: 800;
+        font-size: 17px;
+        color: #04180a;
+        background: linear-gradient(180deg, var(--green) 0%, #5fd63a 55%, var(--green-deep) 160%);
+        box-shadow:
+          0 0 22px rgba(124, 255, 79, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow:
+          0 0 34px rgba(124, 255, 79, 0.65),
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+
+      .btn-primary .hint {
+        display: block;
+        font-family: 'Share Tech Mono', monospace;
+        font-weight: 400;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        margin-top: 4px;
+        color: rgba(4, 30, 12, 0.75);
+      }
+
+      /* Nintendo-red twin of btn-primary for the Switch build */
+      .btn-switch {
+        font-weight: 800;
+        font-size: 17px;
+        color: #fff;
+        border-color: rgba(255, 110, 120, 0.55);
+        background: linear-gradient(180deg, #ff4554 0%, #e60012 55%, #6e0009 160%);
+        box-shadow:
+          0 0 22px rgba(230, 0, 18, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+
+      .btn-switch:hover {
+        transform: translateY(-2px);
+        box-shadow:
+          0 0 34px rgba(230, 0, 18, 0.65),
+          inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      }
+
+      /* the Switch button when the NRO missed the build
+         (scripts/disable-switch-download.mjs) — same shape, no affordance */
+      .btn-unavailable {
+        cursor: default;
+        filter: grayscale(0.7);
+        opacity: 0.55;
+      }
+
+      .btn-unavailable:hover {
+        transform: none;
+      }
+
+      .btn-switch .hint {
+        display: block;
+        font-family: 'Share Tech Mono', monospace;
+        font-weight: 400;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        margin-top: 4px;
+        color: rgba(255, 220, 224, 0.85);
+      }
+
+      .btn-secondary {
+        font-weight: 700;
+        font-size: 13px;
+        color: var(--green);
+        background: rgba(14, 106, 43, 0.16);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(14, 106, 43, 0.34);
+        box-shadow: 0 0 18px rgba(124, 255, 79, 0.3);
+      }
+
+      .howto {
+        margin: 44px auto 0;
+        width: min(520px, 100%);
+        text-align: left;
+        border: 1px solid rgba(140, 255, 110, 0.25);
+        border-radius: 8px;
+        padding: 18px 22px;
+        background: rgba(4, 24, 10, 0.55);
+      }
+
+      .howto h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 13px;
+        letter-spacing: 0.22em;
+        color: var(--yellow);
+        margin: 0 0 10px;
+      }
+
+      .howto li {
+        margin: 8px 0;
+        font-size: 13px;
+        line-height: 1.5;
+        color: rgba(220, 255, 180, 0.8);
+      }
+
+      .howto b {
+        color: var(--green);
+      }
+
+      footer {
+        margin-top: 40px;
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        color: rgba(220, 255, 180, 0.35);
+      }
+
+      footer a {
+        color: rgba(156, 255, 107, 0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img class="logo" src="./logo.png" alt="Ryu" />
+      <h1>RYU</h1>
+      <div class="sub">PLAYSTATION 2 // ATHENAENV // 5VELTE-PS2</div>
+
+      <div class="buttons">
+        <a class="btn btn-switch" href="./ps2-ryu.nro" download>
+          ⬇ DOWNLOAD SWITCH NRO
+          <span class="hint">ps2-ryu.nro — hbmenu on Atmosphère CFW</span>
+        </a>
+        <a class="btn btn-primary" href="./ps2-ryu.iso" download>
+          ⬇ DOWNLOAD PS2 ISO
+          <span class="hint">ps2-ryu.iso — boots on PS2 / PCSX2 / Play!</span>
+        </a>
+        <a class="btn btn-secondary" href="./play/">▶ PLAY IN BROWSER</a>
+      </div>
+
+      <div class="howto">
+        <h2>HOW TO PLAY</h2>
+        <ul>
+          <li><b>Switch (CFW):</b> copy <b>ps2-ryu.nro</b> to <b>sd:/switch/</b> and launch from hbmenu (Atmosphère). Buttons map by position, so the left face button punches whatever it is labelled.</li>
+          <li><b>Emulator:</b> open the ISO in PCSX2, or in the CMG launcher's PlayStation 2 screen (Play!).</li>
+          <li><b>Real hardware:</b> load over USB/SMB with Open PS2 Loader, or burn to DVD-R (softmodded console).</li>
+          <li><b>Controls:</b> d-pad move · <b>UP</b> jump · <b>DOWN</b> crouch · <b>left face button</b> punch (SQUARE) · <b>bottom face button</b> kick (CROSS) · shoryuken <b>→ ↓ → punch</b>.</li>
+          <li><b>Keyboard:</b> arrows move, <b>↑</b> jump, <b>↓</b> crouch, <b>V</b> punch, <b>Z</b> kick.</li>
+        </ul>
+      </div>
+
+      <footer>
+        BUILT WITH <a href="https://github.com/easierbycode/svelte-ps2">5VELTE-PS2</a> ·
+        <a href="https://github.com/easierbycode/ps2-ryu">SOURCE</a>
+      </footer>
+    </main>
+  </body>
+</html>

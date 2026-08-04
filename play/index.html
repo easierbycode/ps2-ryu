@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PS2-Ryu — Play</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #101014; color: #9aa0b0; font: 13px/1.6 monospace; }
+    body { display: grid; grid-template-rows: 1fr auto; }
+    #app { display: grid; place-items: center; min-height: 0; }
+    #app canvas { image-rendering: pixelated; }
+    #hint { text-align: center; padding: 6px 0 10px; }
+    #hint b { color: #e8eaf0; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="hint">
+    <b>&larr;&rarr;</b> move &middot; <b>&uarr;</b> jump &middot; <b>&darr;</b> crouch &middot;
+    <b>V</b> punch &middot; <b>Z</b> kick &middot;
+    shoryuken: <b>&rarr; &darr; &rarr; V</b>
+  </div>
+  <script type="module" src="../src/browser.ts"></script>
+</body>
+</html>
